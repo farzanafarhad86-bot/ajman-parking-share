@@ -1,0 +1,89 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Share Location — Ajman Parking Alert</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: system-ui, -apple-system, Roboto, Arial; padding: 1rem; }
+    .btn { display:inline-block; margin: .5rem 0; padding:.6rem 1rem; background:#0b74ff; color:#fff; border-radius:6px; text-decoration:none; }
+    .muted { color:#666; font-size:.9rem; }
+  </style>
+</head>
+<body>
+  <h1>parking fee Ajman parking alert</h1>
+  <p class="muted">This page will request your current location and prepare a shareable link. Please allow location access when prompted.</p>
+
+  <div id="status">Requesting location…</div>
+  <div id="actions" style="display:none;">
+    <p id="coords"></p>
+    <a id="mapsLink" class="btn" target="_blank" rel="noopener">Open in Google Maps</a>
+    <br/>
+    <a id="whatsappShare" class="btn" target="_blank" rel="noopener">Share on WhatsApp</a>
+    <a id="emailShare" href="#" class="btn" style="background:#2d9cdb">Share by Email</a>
+    <br/>
+    <button id="copyBtn" class="btn" style="background:#4caf50">Copy link</button>
+  </div>
+
+  <script>
+    const status = document.getElementById('status');
+    const actions = document.getElementById('actions');
+    const coordsP = document.getElementById('coords');
+    const mapsLink = document.getElementById('mapsLink');
+    const whatsappShare = document.getElementById('whatsappShare');
+    const emailShare = document.getElementById('emailShare');
+    const copyBtn = document.getElementById('copyBtn');
+
+    function handleError(err) {
+      status.textContent = 'Could not get location: ' + (err && err.message ? err.message : err);
+      status.insertAdjacentHTML('beforeend', '<p class="muted">If the prompt was blocked, please open this page in your browser (not inside WhatsApp) and allow location access.</p>');
+    }
+
+    function buildMapUrl(lat, lon) {
+      return 'https://www.google.com/maps/search/?api=1&query=' + encodeURIComponent(lat + ',' + lon);
+    }
+
+    function buildShareText(mapUrl) {
+      const text = 'parking fee Ajman parking alert ' + mapUrl;
+      return text;
+    }
+
+    if (!navigator.geolocation) {
+      handleError('Geolocation not supported by this browser.');
+    } else {
+      navigator.geolocation.getCurrentPosition(function(position) {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        const mapUrl = buildMapUrl(lat, lon);
+        const shareText = buildShareText(mapUrl);
+
+        status.style.display = 'none';
+        actions.style.display = 'block';
+        coordsP.textContent = 'Coords: ' + lat.toFixed(6) + ', ' + lon.toFixed(6);
+
+        mapsLink.href = mapUrl;
+        mapsLink.textContent = 'Open in Google Maps';
+
+        const waLink = 'https://wa.me/?text=' + encodeURIComponent(shareText);
+        whatsappShare.href = waLink;
+
+        const subject = encodeURIComponent('Parking fee Ajman parking alert');
+        const body = encodeURIComponent('Please use this link to view my location: ' + mapUrl);
+        emailShare.href = 'mailto:?subject=' + subject + '&body=' + body;
+
+        copyBtn.addEventListener('click', function() {
+          navigator.clipboard.writeText(shareText).then(function() {
+            copyBtn.textContent = 'Copied!';
+            setTimeout(() => copyBtn.textContent = 'Copy link', 1500);
+          }, function() {
+            copyBtn.textContent = 'Copy failed';
+          });
+        });
+
+      }, function(err) {
+        handleError(err);
+      }, { enableHighAccuracy: true, maximumAge: 0, timeout: 10000 });
+    }
+  </script>
+</body>
+</html>
